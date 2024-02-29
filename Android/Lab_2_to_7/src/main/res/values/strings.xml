@@ -18,4 +18,5 @@
     <string name="inception">A mind-bending science fiction thriller that delves into the realm of dreams and
         subconscious, blurring the lines between reality and imagination.
     </string>
+    <string name="title_activity_input">InputActivity</string>
 </resources>
