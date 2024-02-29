@@ -47,10 +47,30 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val dbHelper = MovieDbHelper(this)
+
         if (savedInstanceState != null && savedInstanceState.containsKey("movies")) {
             val tmpMoviesArray = savedInstanceState.getSerializable("movies") as ArrayList<Movie>
             movieModel.clear()
             tmpMoviesArray.forEach { movieModel.add(it) }
+        } else {
+            if (dbHelper.isEmpty()) {
+                println("Database is empty")
+
+                val tmpMovieArray = ArrayList<Movie>()
+                movieModel.movieListFlow.value.forEach { tmpMovieArray.add(it) }
+
+                dbHelper.addArrayToDB(tmpMovieArray)
+                dbHelper.printDb()
+            } else {
+                println("Database is NOT empty")
+                dbHelper.printDb()
+
+                val tempLangArray = dbHelper.getMoviesArray()
+
+                movieModel.clear()
+                tempLangArray.forEach { movieModel.add(it) }
+            }
         }
 
         setContent {
@@ -58,10 +78,9 @@ class MainActivity : ComponentActivity() {
 
             Lab_2_to_7Theme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-
                     Column {
-                        AppBar(lazyListState = lazyListState)
-                        MovieList(lazyListState = lazyListState)
+                        AppBar(lazyListState = lazyListState, dbHelper = dbHelper)
+                        MovieList(lazyListState = lazyListState, dbHelper = dbHelper)
                     }
                 }
             }
@@ -91,7 +110,7 @@ class MainActivity : ComponentActivity() {
 
     @ExperimentalMaterial3Api
     @Composable
-    fun AppBar(lazyListState: LazyListState) {
+    fun AppBar(lazyListState: LazyListState, dbHelper: MovieDbHelper) {
         var isDropdownOpen by remember { mutableStateOf(false) }
         var isDialogOpen by remember { mutableStateOf(false) }
 
@@ -103,6 +122,8 @@ class MainActivity : ComponentActivity() {
                     val newMovieItem = activityResult.data?.getSerializableExtra("newMovieItem") as Movie
 
                     movieModel.add(newMovieItem)
+                    dbHelper.addMovie(newMovieItem)
+
                     scope.launch {
                         lazyListState.scrollToItem(movieModel.movies.lastIndex)
                     }
@@ -141,6 +162,21 @@ class MainActivity : ComponentActivity() {
                             startForResult.launch(intent)
                             isDropdownOpen = false
                         }
+                    )
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                "Reset to Defaults",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        },
+                        onClick = {
+                            movieModel.clear()
+                            dbHelper.clear()
+                            movieModel.defaults()
+                            isDropdownOpen = false
+                        },
+                        modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
                     )
                 }
             }
@@ -190,7 +226,7 @@ class MainActivity : ComponentActivity() {
 
     @OptIn(ExperimentalCoilApi::class, ExperimentalFoundationApi::class)
     @Composable
-    fun MovieListItem(movie: Movie, movieListState: State<List<Movie>>) {
+    fun MovieListItem(movie: Movie, movieListState: State<List<Movie>>, dbHelper: MovieDbHelper) {
         var isPopupOpen by remember { mutableStateOf(false) }
         var isDropdownOpen by remember { mutableStateOf(false) }
 
@@ -213,6 +249,7 @@ class MainActivity : ComponentActivity() {
                 if (activityResult.data?.data != null) {
                     val imgURI = activityResult.data?.data
                     movieModel.changeImage(movie, imgURI.toString())
+                    dbHelper.changeImage(movie.name, imgURI.toString())
                 }
             }
 
@@ -249,7 +286,7 @@ class MainActivity : ComponentActivity() {
                     Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
                     MovieListItemRow("Director", movie.director)
                     Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-                    MovieListItemRow("Company", movie.filmCompany)
+                    MovieListItemRow("Company", movie.company)
                 }
             }
             DropdownMenu(
@@ -288,6 +325,7 @@ class MainActivity : ComponentActivity() {
                     onClick = {
                         isDropdownOpen = false
                         movieModel.remove(movie)
+                        dbHelper.deleteMovie(movie.name)
                     },
                     modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
                 )
@@ -296,7 +334,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun ColumnScope.MovieList(lazyListState: LazyListState) {
+    fun ColumnScope.MovieList(lazyListState: LazyListState, dbHelper: MovieDbHelper) {
         val movieListState = movieModel.movieListFlow.collectAsState()
         LazyColumn(
             state = lazyListState,
@@ -308,6 +346,7 @@ class MainActivity : ComponentActivity() {
                 MovieListItem(
                     movie = movie,
                     movieListState = movieListState,
+                    dbHelper = dbHelper,
                 )
             }
         }

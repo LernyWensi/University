@@ -10,7 +10,7 @@ data class Movie(
     val name: String,
     val director: String,
     val genre: String,
-    val filmCompany: String,
+    val company: String,
     var picture: String = R.drawable.movie_roll.toString(),
 ) : Serializable
 
@@ -81,5 +81,62 @@ class MoviesViewModel : ViewModel() {
 
     fun clear() {
         movies.clear()
+    }
+
+    fun defaults() {
+        movies.add(
+            Movie(
+                "The Dark Knight",
+                "Christopher Nolan",
+                "Action",
+                "Warner Bros. Pictures",
+                R.drawable.the_dark_knight.toString(),
+            )
+        )
+        movies.add(
+            Movie(
+                "Interstellar",
+                "Christopher Nolan",
+                "Science Fiction",
+                "Paramount Pictures",
+                R.drawable.interstellar.toString(),
+            )
+        )
+        movies.add(
+            Movie(
+                "Gladiator",
+                "Ridley Scott",
+                "Epic",
+                "DreamWorks Pictures",
+                R.drawable.gladiator.toString()
+            )
+        )
+        movies.add(
+            Movie(
+                "The Shawshank Redemption",
+                "Frank Darabont",
+                "Drama",
+                "Columbia Pictures",
+                R.drawable.the_shawshank_redemption.toString(),
+            )
+        )
+        movies.add(
+            Movie(
+                "The Green Mile",
+                "Frank Darabont",
+                "Drama",
+                "Castle Rock Entertainment",
+                R.drawable.the_green_mile.toString(),
+            )
+        )
+        movies.add(
+            Movie(
+                "Inception",
+                "Christopher Nolan",
+                "Science Fiction",
+                "Warner Bros. Pictures",
+                R.drawable.inception.toString(),
+            )
+        )
     }
 }
