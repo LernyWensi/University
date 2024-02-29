@@ -6,8 +6,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -18,8 +20,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
@@ -28,33 +32,63 @@ import androidx.lifecycle.ViewModel
 import com.example.lab_2_to_7.ui.theme.Lab_2_to_7Theme
 
 data class Movie(
-        val name: String,
-        val director: String,
-        val genre: String,
-        val filmCompany: String,
-        var picture: Int,
+    val name: String,
+    val director: String,
+    val genre: String,
+    val filmCompany: String,
+    var picture: Int,
 )
 
 class MoviesViewModel : ViewModel() {
     val languages = mutableStateListOf<Movie>()
 
     fun addMovie(
-            name: String,
-            director: String,
-            genre: String,
-            filmCompany: String,
-            picture: Int = R.drawable.movie_roll,
+        name: String,
+        director: String,
+        genre: String,
+        filmCompany: String,
+        picture: Int = R.drawable.movie_roll,
     ) {
         languages.add(Movie(name, director, genre, filmCompany, picture))
     }
 
     fun prepopulate(): MoviesViewModel {
-        this.addMovie("The Dark Knight", "Christopher Nolan", "Action", "Warner Bros. Pictures", R.drawable.the_dark_knight)
-        this.addMovie("Interstellar", "Christopher Nolan", "Science Fiction", "Paramount Pictures", R.drawable.interstellar)
-        this.addMovie("Gladiator", "Ridley Scott", "Epic", "DreamWorks Pictures", R.drawable.gradiator)
-        this.addMovie("The Shawshank Redemption", "Frank Darabont", "Drama", "Columbia Pictures", R.drawable.the_shawshank_redemption)
-        this.addMovie("The Green Mile", "Frank Darabont", "Drama", "Castle Rock Entertainment", R.drawable.the_green_mile)
-        this.addMovie("Inception", "Christopher Nolan", "Science Fiction", "Warner Bros. Pictures", R.drawable.inception)
+        this.addMovie(
+            "The Dark Knight",
+            "Christopher Nolan",
+            "Action",
+            "Warner Bros. Pictures",
+            R.drawable.the_dark_knight
+        )
+        this.addMovie(
+            "Interstellar",
+            "Christopher Nolan",
+            "Science Fiction",
+            "Paramount Pictures",
+            R.drawable.interstellar
+        )
+        this.addMovie("Gladiator", "Ridley Scott", "Epic", "DreamWorks Pictures", R.drawable.gladiator)
+        this.addMovie(
+            "The Shawshank Redemption",
+            "Frank Darabont",
+            "Drama",
+            "Columbia Pictures",
+            R.drawable.the_shawshank_redemption
+        )
+        this.addMovie(
+            "The Green Mile",
+            "Frank Darabont",
+            "Drama",
+            "Castle Rock Entertainment",
+            R.drawable.the_green_mile
+        )
+        this.addMovie(
+            "Inception",
+            "Christopher Nolan",
+            "Science Fiction",
+            "Warner Bros. Pictures",
+            R.drawable.inception
+        )
 
         return this
     }
@@ -82,45 +116,101 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun MovieListItemRow(title: String, description: String) {
-    Row(modifier = Modifier.padding(5.dp)) {
-        Text(
-                title,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.width(90.dp),
-        )
-        Text(description, modifier = Modifier.weight(1f))
-    }
+fun MenuItemPopup(
+    title: String,
+    text: String,
+    openPopupHandler: () -> Unit
+) {
+    AlertDialog(
+        title = { Text(title) },
+        text = { Text(text) },
+        onDismissRequest = openPopupHandler,
+        confirmButton = {
+            Button(onClick = openPopupHandler) {
+                Text("Close")
+            }
+        },
+    )
 }
 
 @Composable
+fun ColumnScope.MovieListItemRow(title: String, description: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .weight(1f)
+            .padding(start = 15.dp),
+    ) {
+        Text(
+            title,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.width(85.dp),
+        )
+        Divider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            modifier = Modifier
+                .height(15.dp)
+                .width(1.dp),
+        )
+        Text(description, modifier = Modifier.weight(1f).padding(start = 15.dp))
+    }
+}
+
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
 fun MoveListItem(movie: Movie) {
-    Column {
+    var isPopupOpen by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+
+    val resourceId = context.resources.getIdentifier(
+        movie.name.lowercase().replace(" ", "_"),
+        "string",
+        context.packageName
+    )
+
+    if (isPopupOpen) {
+        MenuItemPopup(
+            movie.name,
+            stringResource(resourceId)
+        ) { isPopupOpen = false }
+    }
+
+    Column(
+        modifier = Modifier.combinedClickable(
+            onClick = {
+                isPopupOpen = true
+            }
+        )
+    ) {
+        Text(
+            movie.name,
+            textAlign = TextAlign.Center,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(5.dp),
+        )
         Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                        .background(MaterialTheme.colorScheme.primaryContainer)
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.height(150.dp),
         ) {
             Image(
-                    painter = painterResource(id = movie.picture),
-                    contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.size(50.dp)
+                painter = painterResource(id = movie.picture),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxHeight(),
             )
-            Text(
-                    movie.name,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        Column {
-            MovieListItemRow("Genre", movie.genre)
-            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-            MovieListItemRow("Director", movie.director)
-            Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-            MovieListItemRow("Company", movie.filmCompany)
+            Column(verticalArrangement = Arrangement.SpaceBetween) {
+                MovieListItemRow("Genre", movie.genre)
+                Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+                MovieListItemRow("Director", movie.director)
+                Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+                MovieListItemRow("Company", movie.filmCompany)
+            }
         }
     }
 }
@@ -156,48 +246,48 @@ fun Menu(viewModel: MoviesViewModel) {
     }
 
     Column(
-            verticalArrangement = Arrangement.spacedBy(5.dp),
-            modifier = Modifier.padding(5.dp).height(IntrinsicSize.Min).imePadding()
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+        modifier = Modifier.padding(5.dp).height(IntrinsicSize.Min).imePadding()
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             TextField(
-                    value = filmCompany,
-                    onValueChange = { filmCompany = it.trim() },
-                    label = { Text("Film Company") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    modifier = Modifier.weight(1f),
+                value = filmCompany,
+                onValueChange = { filmCompany = it.trim() },
+                label = { Text("Film Company") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                modifier = Modifier.weight(1f),
             )
             TextField(
-                    value = genre,
-                    onValueChange = { genre = it.trim() },
-                    label = { Text("Genre") },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                    modifier = Modifier.weight(1f),
+                value = genre,
+                onValueChange = { genre = it.trim() },
+                label = { Text("Genre") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                modifier = Modifier.weight(1f),
             )
         }
 
         TextField(
-                value = director,
-                onValueChange = { director = it.trim() },
-                label = { Text("Director") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                modifier = Modifier.fillMaxWidth(),
+            value = director,
+            onValueChange = { director = it.trim() },
+            label = { Text("Director") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            modifier = Modifier.fillMaxWidth(),
         )
         TextField(
-                value = name,
-                onValueChange = { name = it.trim() },
-                label = { Text("Name") },
-                singleLine = true,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                modifier = Modifier.fillMaxWidth(),
+            value = name,
+            onValueChange = { name = it.trim() },
+            label = { Text("Name") },
+            singleLine = true,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+            modifier = Modifier.fillMaxWidth(),
         )
 
         Button(
-                onClick = { handleClickEvent() },
-                modifier = Modifier.fillMaxWidth(),
+            onClick = { handleClickEvent() },
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text("Add Movie")
         }

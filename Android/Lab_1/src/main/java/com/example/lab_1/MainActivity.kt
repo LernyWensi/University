@@ -41,43 +41,43 @@ fun MakeUI(ctx: MainActivity) {
         Column(verticalArrangement = Arrangement.spacedBy(5.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 TextField(
-                        modifier = Modifier.weight(1f),
-                        value = x1,
-                        onValueChange = { x1 = it },
-                        placeholder = { Text("X1") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    modifier = Modifier.weight(1f),
+                    value = x1,
+                    onValueChange = { x1 = it },
+                    placeholder = { Text("X1") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
                 TextField(
-                        modifier = Modifier.weight(1f),
-                        value = x2,
-                        onValueChange = { x2 = it },
-                        placeholder = { Text("X2") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    modifier = Modifier.weight(1f),
+                    value = x2,
+                    onValueChange = { x2 = it },
+                    placeholder = { Text("X2") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
                 TextField(
-                        modifier = Modifier.weight(1f),
-                        value = x3,
-                        onValueChange = { x3 = it },
-                        placeholder = { Text("X3") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    modifier = Modifier.weight(1f),
+                    value = x3,
+                    onValueChange = { x3 = it },
+                    placeholder = { Text("X3") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
                 TextField(
-                        modifier = Modifier.weight(1f),
-                        value = x4,
-                        onValueChange = { x4 = it },
-                        placeholder = { Text("X4") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
+                    modifier = Modifier.weight(1f),
+                    value = x4,
+                    onValueChange = { x4 = it },
+                    placeholder = { Text("X4") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
                 )
             }
             Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = {
-                        val determinant = calculateDeterminant(x1.toFloat(), x2.toFloat(), x4.toFloat(), x3.toFloat())
-                        val toast = Toast.makeText(ctx, "Determinant is $determinant", Toast.LENGTH_LONG)
-                        toast.show()
-                    }
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    val determinant = calculateDeterminant(x1.toFloat(), x2.toFloat(), x4.toFloat(), x3.toFloat())
+                    val toast = Toast.makeText(ctx, "Determinant is $determinant", Toast.LENGTH_LONG)
+                    toast.show()
+                }
             ) {
                 Text("Calculate")
             }
