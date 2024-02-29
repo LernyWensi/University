@@ -2,17 +2,20 @@
 
 package com.example.lab_2_to_7
 
+import android.Manifest
 import android.app.Activity
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.provider.MediaStore
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.activity.viewModels
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -30,42 +33,65 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.rememberImagePainter
 import com.example.lab_2_to_7.ui.theme.Lab_2_to_7Theme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 class MainActivity : ComponentActivity() {
+    private val movieModel = MoviesViewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (savedInstanceState != null && savedInstanceState.containsKey("movies")) {
+            val tmpMoviesArray = savedInstanceState.getSerializable("movies") as ArrayList<Movie>
+            movieModel.clear()
+            tmpMoviesArray.forEach { movieModel.add(it) }
+        }
+
         setContent {
             val lazyListState = rememberLazyListState()
-            val movieModel: MoviesViewModel by viewModels()
 
             Lab_2_to_7Theme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    movieModel.prepopulate()
 
                     Column {
-                        AppBar(
-                            movieModel = movieModel,
-                            lazyListState = lazyListState
-                        )
-                        MovieList(
-                            movies = movieModel.movies,
-                            lazyListState = lazyListState,
-                            modifier = Modifier
-                                .fillMaxHeight()
-                                .weight(1f)
-                        )
+                        AppBar(lazyListState = lazyListState)
+                        MovieList(lazyListState = lazyListState)
                     }
                 }
             }
         }
     }
 
+    private fun pictureIsInt(picture: String): Boolean {
+        val data = try {
+            picture.toInt()
+        } catch (e: NumberFormatException) {
+            null
+        }
+
+        return data != null
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        val tmpMovieArray = ArrayList<Movie>()
+        movieModel.movieListFlow.value.forEach { tmpMovieArray.add(it) }
+
+        outState.putSerializable("movies", tmpMovieArray)
+
+        super.onSaveInstanceState(outState)
+    }
+
     @ExperimentalMaterial3Api
     @Composable
-    fun AppBar(movieModel: MoviesViewModel, lazyListState: LazyListState) {
+    fun AppBar(lazyListState: LazyListState) {
         var isDropdownOpen by remember { mutableStateOf(false) }
         var isDialogOpen by remember { mutableStateOf(false) }
 
@@ -76,7 +102,7 @@ class MainActivity : ComponentActivity() {
                 if (activityResult.resultCode == Activity.RESULT_OK) {
                     val newMovieItem = activityResult.data?.getSerializableExtra("newMovieItem") as Movie
 
-                    movieModel.addMovie(newMovieItem)
+                    movieModel.add(newMovieItem)
                     scope.launch {
                         lazyListState.scrollToItem(movieModel.movies.lastIndex)
                     }
@@ -162,9 +188,12 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    @OptIn(ExperimentalCoilApi::class, ExperimentalFoundationApi::class)
     @Composable
-    fun MoveListItem(movie: Movie) {
+    fun MovieListItem(movie: Movie, movieListState: State<List<Movie>>) {
         var isPopupOpen by remember { mutableStateOf(false) }
+        var isDropdownOpen by remember { mutableStateOf(false) }
+
 
         val resourceId = this@MainActivity.resources.getIdentifier(
             movie.name.lowercase().replace(" ", "_"),
@@ -179,8 +208,20 @@ class MainActivity : ComponentActivity() {
             ) { isPopupOpen = false }
         }
 
+        val launcher =
+            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
+                if (activityResult.data?.data != null) {
+                    val imgURI = activityResult.data?.data
+                    movieModel.changeImage(movie, imgURI.toString())
+                }
+            }
+
         Column(
-            modifier = Modifier.clickable(onClick = { isPopupOpen = true })
+            modifier = Modifier
+                .combinedClickable(
+                    onClick = { isPopupOpen = true },
+                    onLongClick = { isDropdownOpen = true }
+                )
         ) {
             Text(
                 movie.name,
@@ -197,10 +238,11 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.height(150.dp),
             ) {
                 Image(
-                    painter = painterResource(id = movie.picture),
+                    painter = if (pictureIsInt(movie.picture)) painterResource(movie.picture.toInt())
+                    else rememberImagePainter(movie.picture),
                     contentDescription = null,
-                    contentScale = ContentScale.Fit,
-                    modifier = Modifier.fillMaxHeight(),
+                    contentScale = ContentScale.FillHeight,
+                    modifier = Modifier.height(150.dp).width(100.dp),
                 )
                 Column(verticalArrangement = Arrangement.SpaceBetween) {
                     MovieListItemRow("Genre", movie.genre)
@@ -210,14 +252,63 @@ class MainActivity : ComponentActivity() {
                     MovieListItemRow("Company", movie.filmCompany)
                 }
             }
+            DropdownMenu(
+                expanded = isDropdownOpen,
+                onDismissRequest = { isDropdownOpen = false },
+            ) {
+                DropdownMenuItem(
+                    text = { Text("Change Picture") },
+                    onClick = {
+                        isDropdownOpen = false
+
+                        val grant =
+                            ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.READ_MEDIA_IMAGES)
+
+                        if (grant != PackageManager.PERMISSION_GRANTED) {
+                            val permissionList = arrayOfNulls<String>(1)
+                            permissionList[0] = Manifest.permission.READ_MEDIA_IMAGES
+                            ActivityCompat.requestPermissions(this@MainActivity, permissionList, 1)
+                        }
+
+                        val intent = Intent(
+                            Intent.ACTION_OPEN_DOCUMENT,
+                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                        ).apply { addCategory(Intent.CATEGORY_OPENABLE) }
+
+                        launcher.launch(intent)
+                    }
+                )
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            "Delete Movie",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    },
+                    onClick = {
+                        isDropdownOpen = false
+                        movieModel.remove(movie)
+                    },
+                    modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+                )
+            }
         }
     }
 
     @Composable
-    fun MovieList(movies: List<Movie>, modifier: Modifier, lazyListState: LazyListState) {
-        LazyColumn(modifier, state = lazyListState) {
-            items(movies) {
-                MoveListItem(it)
+    fun ColumnScope.MovieList(lazyListState: LazyListState) {
+        val movieListState = movieModel.movieListFlow.collectAsState()
+        LazyColumn(
+            state = lazyListState,
+            modifier = Modifier
+                .fillMaxHeight()
+                .weight(1f),
+        ) {
+            items(movieModel.movieListFlow.value) { movie ->
+                MovieListItem(
+                    movie = movie,
+                    movieListState = movieListState,
+                )
             }
         }
     }
