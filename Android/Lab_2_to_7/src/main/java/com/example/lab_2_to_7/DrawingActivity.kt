@@ -9,7 +9,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -31,14 +30,15 @@ class DrawingActivity : ComponentActivity() {
                     stringResource(R.string.rect),
                     stringResource(R.string.circle),
                     stringResource(R.string.image),
+                    stringResource(R.string.second_name),
                     stringResource(R.string.save),
                 )
 
             Lab_2_to_7Theme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Column(modifier = Modifier.fillMaxSize()) {
-                        Menu(buttonNames, viewRemember.value)
                         Canvas(viewRemember.value)
+                        Menu(buttonNames, viewRemember.value)
                     }
                 }
             }
@@ -47,17 +47,13 @@ class DrawingActivity : ComponentActivity() {
 }
 
 @Composable
-fun Menu(buttonNames: Array<String>, myView: CanvasViewModel?) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(5.dp, Alignment.CenterHorizontally),
-        modifier = Modifier.fillMaxWidth().padding(5.dp)
-    ) {
+fun ColumnScope.Menu(buttonNames: Array<String>, myView: CanvasViewModel?) {
+    Column(modifier = Modifier.height(IntrinsicSize.Min).padding(5.dp)) {
         buttonNames.forEach {
             Button(
                 shape = ShapeDefaults.Small,
+                modifier = Modifier.fillMaxWidth(),
                 onClick = { myView!!.funcArray[buttonNames.lastIndexOf(it)]() },
-                modifier = Modifier.weight(1f)
             ) {
                 Text(
                     text = it,
@@ -70,9 +66,9 @@ fun Menu(buttonNames: Array<String>, myView: CanvasViewModel?) {
 }
 
 @Composable
-fun Canvas(myView: CanvasViewModel?) {
+fun ColumnScope.Canvas(myView: CanvasViewModel?) {
     AndroidView(
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.fillMaxSize().weight(1f),
         factory = { myView!! },
     )
 }

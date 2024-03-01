@@ -18,12 +18,12 @@ class CanvasViewModel(context: Context?) : View(context) {
         paint = Paint()
 
         paint!!.isAntiAlias = true
-        paint?.setColor(Color.GREEN)
+        paint?.setColor(Color.MAGENTA)
         paint?.style = Paint.Style.STROKE
 
         paint?.strokeJoin = Paint.Join.ROUND
         paint?.strokeCap = Paint.Cap.ROUND
-        paint?.strokeWidth = 12F
+        paint?.strokeWidth = 8F
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -38,18 +38,18 @@ class CanvasViewModel(context: Context?) : View(context) {
     }
 
     private fun drawCircle() {
-        canvas!!.drawCircle(100f, 100f, 50f, paint!!)
+        canvas!!.drawCircle(700f, 300f, 90f, paint!!)
         invalidate()
     }
 
     private fun drawSquare() {
-        canvas!!.drawRect(200f, 200f, 300f, 300f, paint!!)
+        canvas!!.drawRect(100f, 300f, 400f, 600f, paint!!)
         invalidate()
     }
 
     private fun drawCat() {
         val mBitmapFromSdcard = BitmapFactory.decodeFile("/sdcard/Pictures/another_cat_square.png")
-        canvas!!.drawBitmap(mBitmapFromSdcard, 100f, 100f, paint)
+        canvas!!.drawBitmap(mBitmapFromSdcard, 30f, 800f, paint)
         invalidate()
     }
 
@@ -64,7 +64,7 @@ class CanvasViewModel(context: Context?) : View(context) {
         outStream.close()
     }
 
-    val funcArray = arrayOf(::drawSquare, ::drawCircle, ::drawCat, ::onSaveClick)
+    val funcArray = arrayOf(::drawSquare, ::drawCircle, ::drawCat, ::drawSecondName, ::onSaveClick)
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
@@ -80,5 +80,50 @@ class CanvasViewModel(context: Context?) : View(context) {
         invalidate()
 
         return true
+    }
+
+    private fun drawDiagonalLine(startX: Float, startY: Float, endX: Float, endY: Float) {
+        canvas!!.drawLine(startX, startY, endX, endY, paint!!)
+    }
+
+    private fun drawSecondName() {
+        drawDiagonalLine(50f, 50f, 50f, 150f)
+        drawDiagonalLine(50f, 50f, 120f, 50f)
+        drawDiagonalLine(120f, 50f, 120f, 150f)
+
+        canvas!!.drawOval(150f, 50f, 220f, 150f,
+            Paint().apply {
+                strokeWidth = 8F
+                style = Paint.Style.STROKE
+                color = Color.MAGENTA
+            }
+        )
+
+        drawDiagonalLine(250f, 50f, 320f, 150f)
+        drawDiagonalLine(320f, 50f, 250f, 150f)
+
+        drawDiagonalLine(350f, 50f, 350f, 150f)
+        drawDiagonalLine(420f, 50f, 350f, 150f)
+        drawDiagonalLine(420f, 50f, 420f, 150f)
+
+        drawDiagonalLine(450f, 150f, 485f, 50f)
+        drawDiagonalLine(520f, 150f, 485f, 50f)
+
+        drawDiagonalLine(550f, 50f, 550f, 150f)
+        drawDiagonalLine(550f, 150f, 620f, 150f)
+        drawDiagonalLine(550f, 95f, 620f, 95f)
+        drawDiagonalLine(620f, 95f, 620f, 150f)
+
+        drawDiagonalLine(650f, 50f, 650f, 150f)
+        drawDiagonalLine(650f, 100f, 705f, 50f)
+        drawDiagonalLine(650f, 100f, 705f, 150f)
+
+        canvas!!.drawOval(735f, 50f, 805f, 150f,
+            Paint().apply {
+                strokeWidth = 8F
+                style = Paint.Style.STROKE
+                color = Color.MAGENTA
+            }
+        )
     }
 }

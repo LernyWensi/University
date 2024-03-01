@@ -20,4 +20,5 @@
     <string name="no_description">Описание отвутсвует</string>
     <string name="no_image">Изображение не найдено</string>
     <string name="save">Сохранить</string>
+    <string name="second_name">Фамилия</string>
 </resources>

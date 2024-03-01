@@ -46,4 +46,5 @@
     <string name="no_description">No Description Found</string>
     <string name="no_image">Image Not Found</string>
     <string name="save">Save</string>
+    <string name="second_name">Second Name</string>
 </resources>
