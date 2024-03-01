@@ -1,22 +1,49 @@
 <resources>
     <string name="app_name">Lab_2_to_7</string>
-    <string name="the_dark_knight">A gripping action film that follows the iconic DC Comics character Batman as he faces
+    <string name="title_activity_input" translatable="false">InputActivity</string>
+    <string name="title_activity_drawing" translatable="false">DrawingActivity</string>
+
+    <string name="the_dark_knight" translatable="false">A gripping action film that follows the iconic DC Comics
+        character Batman as he faces
         off against the Joker, a sadistic criminal mastermind.
     </string>
-    <string name="interstellar">A visually stunning science fiction epic that explores the vastness of space and the
+    <string name="interstellar" translatable="false">A visually stunning science fiction epic that explores the vastness
+        of space and the
         resilience of the human spirit in the face of insurmountable odds.
     </string>
-    <string name="gladiator">An epic historical drama that follows the journey of a Roman general who seeks revenge
+    <string name="gladiator" translatable="false">An epic historical drama that follows the journey of a Roman general
+        who seeks revenge
         against the corrupt emperor who murdered his family and sent him into slavery.
     </string>
-    <string name="the_shawshank_redemption">A poignant and powerful drama that tells the story of two imprisoned men who
+    <string name="the_shawshank_redemption" translatable="false">A poignant and powerful drama that tells the story of
+        two imprisoned men who
         form a bond of friendship and find redemption through acts of decency and integrity.
     </string>
-    <string name="the_green_mile">A moving and thought-provoking drama set on death row, where a gentle giant with
+    <string name="the_green_mile" translatable="false">A moving and thought-provoking drama set on death row, where a
+        gentle giant with
         supernatural abilities brings healing and hope to those around him.
     </string>
-    <string name="inception">A mind-bending science fiction thriller that delves into the realm of dreams and
+    <string name="inception" translatable="false">A mind-bending science fiction thriller that delves into the realm of
+        dreams and
         subconscious, blurring the lines between reality and imagination.
     </string>
-    <string name="title_activity_input">InputActivity</string>
+
+    <string name="rect">Rect</string>
+    <string name="circle">Circle</string>
+    <string name="image">Image</string>
+    <string name="movies">Movies</string>
+    <string name="drawing">Drawing</string>
+    <string name="about">About</string>
+    <string name="add_new_movie">Add New Movie</string>
+    <string name="reset_to_defaults">Reset to Defaults</string>
+    <string name="change_picture">Change Picture</string>
+    <string name="delete_movie">Delete Movie</string>
+    <string name="film_company">Company</string>
+    <string name="genre">Genre</string>
+    <string name="director">Director</string>
+    <string name="name">Name</string>
+    <string name="close">Close</string>
+    <string name="no_description">No Description Found</string>
+    <string name="no_image">Image Not Found</string>
+    <string name="save">Save</string>
 </resources>

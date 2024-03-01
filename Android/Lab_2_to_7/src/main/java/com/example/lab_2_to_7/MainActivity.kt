@@ -23,14 +23,16 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
@@ -79,22 +81,15 @@ class MainActivity : ComponentActivity() {
             Lab_2_to_7Theme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     Column {
-                        AppBar(lazyListState = lazyListState, dbHelper = dbHelper)
-                        MovieList(lazyListState = lazyListState, dbHelper = dbHelper)
+                        AppBar(
+                            lazyListState = lazyListState,
+                            dbHelper = dbHelper,
+                            movieModel = movieModel
+                        )
                     }
                 }
             }
         }
-    }
-
-    private fun pictureIsInt(picture: String): Boolean {
-        val data = try {
-            picture.toInt()
-        } catch (e: NumberFormatException) {
-            null
-        }
-
-        return data != null
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -107,249 +102,317 @@ class MainActivity : ComponentActivity() {
 
         super.onSaveInstanceState(outState)
     }
+}
 
-    @ExperimentalMaterial3Api
-    @Composable
-    fun AppBar(lazyListState: LazyListState, dbHelper: MovieDbHelper) {
-        var isDropdownOpen by remember { mutableStateOf(false) }
-        var isDialogOpen by remember { mutableStateOf(false) }
+fun pictureIsInt(picture: String): Boolean {
+    val data = try {
+        picture.toInt()
+    } catch (e: NumberFormatException) {
+        null
+    }
 
-        val scope = rememberCoroutineScope()
+    return data != null
+}
 
-        val startForResult =
-            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
-                if (activityResult.resultCode == Activity.RESULT_OK) {
-                    val newMovieItem = activityResult.data?.getSerializableExtra("newMovieItem") as Movie
 
-                    movieModel.add(newMovieItem)
-                    dbHelper.addMovie(newMovieItem)
+@ExperimentalMaterial3Api
+@Composable
+fun AppBar(lazyListState: LazyListState, dbHelper: MovieDbHelper, movieModel: MoviesViewModel) {
+    val context = LocalContext.current
 
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    var isDropdownOpen by remember { mutableStateOf(false) }
+    var isDialogOpen by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
+
+    val startForResult =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
+            if (activityResult.resultCode == Activity.RESULT_OK) {
+                val newMovieItem = activityResult.data?.getSerializableExtra("newMovieItem") as Movie
+
+                movieModel.add(newMovieItem)
+                dbHelper.addMovie(newMovieItem)
+
+                scope.launch {
+                    lazyListState.scrollToItem(movieModel.movies.lastIndex)
+                }
+            }
+        }
+
+    if (isDialogOpen) {
+        Popup(
+            stringResource(R.string.about),
+            text = "John Q. Public",
+        ) { isDialogOpen = false }
+    }
+
+    TopAppBar(
+        title = { Text(stringResource(R.string.movies)) },
+        navigationIcon = {
+            IconButton(
+                onClick = {
                     scope.launch {
-                        lazyListState.scrollToItem(movieModel.movies.lastIndex)
+                        if (drawerState.isClosed) drawerState.open()
+                        else drawerState.close()
                     }
-                }
-            }
-
-        if (isDialogOpen) {
-            Popup(
-                "About",
-                text = "John Q. Public",
-            ) { isDialogOpen = false }
-        }
-
-
-        TopAppBar(
-            title = { Text("Movies") },
-            actions = {
-                IconButton(onClick = { isDropdownOpen = true }) {
-                    Icon(Icons.Default.MoreVert, null)
-                }
-                DropdownMenu(
-                    expanded = isDropdownOpen,
-                    onDismissRequest = { isDropdownOpen = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("About") },
-                        onClick = {
-                            isDropdownOpen = false
-                            isDialogOpen = true
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Add New Movie") },
-                        onClick = {
-                            val intent = Intent(this@MainActivity, InputActivity::class.java)
-                            startForResult.launch(intent)
-                            isDropdownOpen = false
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                "Reset to Defaults",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        },
-                        onClick = {
-                            movieModel.clear()
-                            dbHelper.clear()
-                            movieModel.defaults()
-                            isDropdownOpen = false
-                        },
-                        modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
-                    )
-                }
-            }
-        )
-    }
-
-    @Composable
-    fun Popup(
-        title: String,
-        text: String,
-        openPopupHandler: () -> Unit
-    ) {
-        AlertDialog(
-            title = { Text(title) },
-            text = { Text(text) },
-            onDismissRequest = openPopupHandler,
-            confirmButton = {
-                Button(onClick = openPopupHandler) {
-                    Text("Close")
-                }
-            },
-        )
-    }
-
-    @Composable
-    fun ColumnScope.MovieListItemRow(title: String, description: String) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 15.dp),
-        ) {
-            Text(
-                title,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.width(85.dp),
-            )
-            Divider(
-                color = MaterialTheme.colorScheme.outlineVariant,
-                modifier = Modifier
-                    .height(15.dp)
-                    .width(1.dp),
-            )
-            Text(description, modifier = Modifier.weight(1f).padding(start = 15.dp))
-        }
-    }
-
-    @OptIn(ExperimentalCoilApi::class, ExperimentalFoundationApi::class)
-    @Composable
-    fun MovieListItem(movie: Movie, movieListState: State<List<Movie>>, dbHelper: MovieDbHelper) {
-        var isPopupOpen by remember { mutableStateOf(false) }
-        var isDropdownOpen by remember { mutableStateOf(false) }
-
-
-        val resourceId = this@MainActivity.resources.getIdentifier(
-            movie.name.lowercase().replace(" ", "_"),
-            "string",
-            this@MainActivity.packageName
-        )
-
-        if (isPopupOpen) {
-            Popup(
-                movie.name,
-                if (resourceId != 0) stringResource(resourceId) else "No description found"
-            ) { isPopupOpen = false }
-        }
-
-        val launcher =
-            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
-                if (activityResult.data?.data != null) {
-                    val imgURI = activityResult.data?.data
-                    movieModel.changeImage(movie, imgURI.toString())
-                    dbHelper.changeImage(movie.name, imgURI.toString())
-                }
-            }
-
-        Column(
-            modifier = Modifier
-                .combinedClickable(
-                    onClick = { isPopupOpen = true },
-                    onLongClick = { isDropdownOpen = true }
-                )
-        ) {
-            Text(
-                movie.name,
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primaryContainer)
-                    .padding(5.dp),
-            )
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.height(150.dp),
+                },
             ) {
-                Image(
-                    painter = if (pictureIsInt(movie.picture)) painterResource(movie.picture.toInt())
-                    else rememberImagePainter(movie.picture),
-                    contentDescription = null,
-                    contentScale = ContentScale.FillHeight,
-                    modifier = Modifier.height(150.dp).width(100.dp),
+                Icon(
+                    Icons.Rounded.Menu,
+                    contentDescription = ""
                 )
-                Column(verticalArrangement = Arrangement.SpaceBetween) {
-                    MovieListItemRow("Genre", movie.genre)
-                    Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-                    MovieListItemRow("Director", movie.director)
-                    Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
-                    MovieListItemRow("Company", movie.company)
-                }
+            }
+        },
+        actions = {
+            IconButton(onClick = { isDropdownOpen = true }) {
+                Icon(Icons.Default.MoreVert, null)
             }
             DropdownMenu(
                 expanded = isDropdownOpen,
-                onDismissRequest = { isDropdownOpen = false },
+                onDismissRequest = { isDropdownOpen = false }
             ) {
                 DropdownMenuItem(
-                    text = { Text("Change Picture") },
+                    text = { Text(stringResource(R.string.about)) },
                     onClick = {
                         isDropdownOpen = false
-
-                        val grant =
-                            ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.READ_MEDIA_IMAGES)
-
-                        if (grant != PackageManager.PERMISSION_GRANTED) {
-                            val permissionList = arrayOfNulls<String>(1)
-                            permissionList[0] = Manifest.permission.READ_MEDIA_IMAGES
-                            ActivityCompat.requestPermissions(this@MainActivity, permissionList, 1)
-                        }
-
-                        val intent = Intent(
-                            Intent.ACTION_OPEN_DOCUMENT,
-                            MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                        ).apply { addCategory(Intent.CATEGORY_OPENABLE) }
-
-                        launcher.launch(intent)
+                        isDialogOpen = true
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text(stringResource(R.string.add_new_movie)) },
+                    onClick = {
+                        val intent = Intent(context, InputActivity::class.java)
+                        startForResult.launch(intent)
+                        isDropdownOpen = false
                     }
                 )
                 DropdownMenuItem(
                     text = {
                         Text(
-                            "Delete Movie",
+                            stringResource(R.string.reset_to_defaults),
                             color = MaterialTheme.colorScheme.error
                         )
                     },
                     onClick = {
+                        movieModel.clear()
+                        dbHelper.clear()
+                        movieModel.defaults()
                         isDropdownOpen = false
-                        movieModel.remove(movie)
-                        dbHelper.deleteMovie(movie.name)
                     },
                     modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
                 )
             }
         }
-    }
+    )
 
-    @Composable
-    fun ColumnScope.MovieList(lazyListState: LazyListState, dbHelper: MovieDbHelper) {
-        val movieListState = movieModel.movieListFlow.collectAsState()
-        LazyColumn(
-            state = lazyListState,
-            modifier = Modifier
-                .fillMaxHeight()
-                .weight(1f),
-        ) {
-            items(movieModel.movieListFlow.value) { movie ->
-                MovieListItem(
-                    movie = movie,
-                    movieListState = movieListState,
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            ModalDrawerSheet {
+                Spacer(Modifier.height(12.dp))
+                NavigationDrawerItem(
+                    icon = { Icon(Icons.Default.Star, contentDescription = null) },
+                    label = { Text(stringResource(R.string.drawing)) },
+                    selected = false,
+                    onClick = {
+                        scope.launch { drawerState.close() }
+                        val intent = Intent(context, DrawingActivity::class.java)
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                )
+            }
+        },
+        content = {
+            Column {
+                MovieList(
+                    lazyListState = lazyListState,
                     dbHelper = dbHelper,
+                    movieModel = movieModel
                 )
             }
         }
+    )
+}
+
+@Composable
+fun Popup(
+    title: String,
+    text: String,
+    openPopupHandler: () -> Unit
+) {
+    AlertDialog(
+        title = { Text(title) },
+        text = { Text(text) },
+        onDismissRequest = openPopupHandler,
+        confirmButton = {
+            Button(onClick = openPopupHandler) {
+                Text(stringResource(R.string.close))
+            }
+        },
+    )
+}
+
+@Composable
+fun ColumnScope.MovieListItemRow(title: String, description: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .weight(1f)
+            .padding(start = 15.dp),
+    ) {
+        Text(
+            title,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.width(75.dp),
+        )
+        Divider(
+            color = MaterialTheme.colorScheme.outlineVariant,
+            modifier = Modifier
+                .height(15.dp)
+                .width(1.dp),
+        )
+        Text(
+            description,
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 15.dp)
+        )
+    }
+}
+
+@OptIn(ExperimentalCoilApi::class, ExperimentalFoundationApi::class)
+@Composable
+fun MovieListItem(
+    movie: Movie,
+    dbHelper: MovieDbHelper,
+    movieModel: MoviesViewModel
+) {
+    val context = LocalContext.current
+
+    var isPopupOpen by remember { mutableStateOf(false) }
+    var isDropdownOpen by remember { mutableStateOf(false) }
+
+    val resourceId = context.resources.getIdentifier(
+        movie.name.lowercase().replace(" ", "_"),
+        "string",
+        context.packageName
+    )
+
+    if (isPopupOpen) {
+        Popup(
+            movie.name,
+            if (resourceId != 0) stringResource(resourceId) else stringResource(R.string.no_description)
+        ) { isPopupOpen = false }
+    }
+
+    val launcher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { activityResult ->
+            if (activityResult.data?.data != null) {
+                val imgURI = activityResult.data?.data
+                movieModel.changeImage(movie, imgURI.toString())
+                dbHelper.changeImage(movie.name, imgURI.toString())
+            }
+        }
+
+    Column(
+        modifier = Modifier
+            .combinedClickable(
+                onClick = { isPopupOpen = true },
+                onLongClick = { isDropdownOpen = true }
+            )
+    ) {
+        Text(
+            movie.name,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.primaryContainer)
+                .padding(10.dp),
+        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.height(150.dp),
+        ) {
+            Image(
+                painter = if (pictureIsInt(movie.picture)) painterResource(movie.picture.toInt())
+                else rememberImagePainter(movie.picture),
+                contentDescription = null,
+                contentScale = ContentScale.FillHeight,
+                modifier = Modifier.height(150.dp).width(100.dp),
+            )
+            Column(verticalArrangement = Arrangement.SpaceBetween) {
+                MovieListItemRow(stringResource(R.string.genre), movie.genre)
+                Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+                MovieListItemRow(stringResource(R.string.director), movie.director)
+                Divider(color = MaterialTheme.colorScheme.outlineVariant, thickness = 1.dp)
+                MovieListItemRow(stringResource(R.string.film_company), movie.company)
+            }
+        }
+        DropdownMenu(
+            expanded = isDropdownOpen,
+            onDismissRequest = { isDropdownOpen = false },
+        ) {
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.change_picture)) },
+                onClick = {
+                    isDropdownOpen = false
+
+                    val grant =
+                        ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
+
+                    if (grant != PackageManager.PERMISSION_GRANTED) {
+                        val permissionList = arrayOfNulls<String>(1)
+                        permissionList[0] = Manifest.permission.READ_EXTERNAL_STORAGE
+                        ActivityCompat.requestPermissions(context as Activity, permissionList, 1)
+                    }
+
+                    val intent = Intent(
+                        Intent.ACTION_OPEN_DOCUMENT,
+                        MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                    ).apply { addCategory(Intent.CATEGORY_OPENABLE) }
+
+                    launcher.launch(intent)
+                }
+            )
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        stringResource(R.string.delete_movie),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                },
+                onClick = {
+                    isDropdownOpen = false
+                    movieModel.remove(movie)
+                    dbHelper.deleteMovie(movie.name)
+                },
+                modifier = Modifier.background(MaterialTheme.colorScheme.errorContainer)
+            )
+        }
+    }
+}
+
+@Composable
+fun ColumnScope.MovieList(lazyListState: LazyListState, dbHelper: MovieDbHelper, movieModel: MoviesViewModel) {
+    LazyColumn(
+        state = lazyListState,
+        modifier = Modifier
+            .fillMaxHeight()
+            .weight(1f),
+    ) {
+        items(
+            items = movieModel.movieListFlow.value,
+            key = { movie -> movie.name },
+            itemContent = { movie ->
+                MovieListItem(movie, dbHelper, movieModel)
+            }
+        )
     }
 }
 

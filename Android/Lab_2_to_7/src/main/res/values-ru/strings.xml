@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Лабараторные</string>
+
+    <string name="rect">Прямоугольник</string>
+    <string name="circle">Круг</string>
+    <string name="image">Изображение</string>
+    <string name="movies">Фильмы</string>
+    <string name="drawing">Рисование</string>
+    <string name="about">О программе</string>
+    <string name="add_new_movie">Добавать фильм</string>
+    <string name="reset_to_defaults">Список по умолчанию</string>
+    <string name="change_picture">Изменить изображение</string>
+    <string name="delete_movie">Удалить фильм</string>
+    <string name="film_company">Компания</string>
+    <string name="genre">Жанр</string>
+    <string name="director">Режисер</string>
+    <string name="name">Название</string>
+    <string name="close">Закрыть</string>
+    <string name="no_description">Описание отвутсвует</string>
+    <string name="no_image">Изображение не найдено</string>
+    <string name="save">Сохранить</string>
+</resources>

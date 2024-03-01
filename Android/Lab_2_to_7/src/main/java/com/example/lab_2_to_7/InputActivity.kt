@@ -9,6 +9,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.example.lab_2_to_7.ui.theme.Lab_2_to_7Theme
@@ -53,7 +54,7 @@ class InputActivity : ComponentActivity() {
                 TextField(
                     value = filmCompany,
                     onValueChange = { filmCompany = it.trim() },
-                    label = { Text("Film Company") },
+                    label = { Text(stringResource(R.string.film_company)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     modifier = Modifier.weight(1f),
@@ -61,7 +62,7 @@ class InputActivity : ComponentActivity() {
                 TextField(
                     value = genre,
                     onValueChange = { genre = it.trim() },
-                    label = { Text("Genre") },
+                    label = { Text(stringResource(R.string.genre)) },
                     singleLine = true,
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                     modifier = Modifier.weight(1f),
@@ -71,7 +72,7 @@ class InputActivity : ComponentActivity() {
             TextField(
                 value = director,
                 onValueChange = { director = it.trim() },
-                label = { Text("Director") },
+                label = { Text(stringResource(R.string.director)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
@@ -79,17 +80,18 @@ class InputActivity : ComponentActivity() {
             TextField(
                 value = name,
                 onValueChange = { name = it.trim() },
-                label = { Text("Name") },
+                label = { Text(stringResource(R.string.name)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 modifier = Modifier.fillMaxWidth(),
             )
 
             Button(
+                shape = ShapeDefaults.Small,
                 onClick = handleClickEvent,
                 modifier = Modifier.fillMaxWidth(),
             ) {
-                Text("Add Movie")
+                Text(stringResource(R.string.add_new_movie))
             }
         }
     }
